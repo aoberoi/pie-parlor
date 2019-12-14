@@ -9,7 +9,8 @@
   "author": "Ankur Oberoi <aoberoi@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@slack/bolt": "^1.4.1"
+    "@slack/bolt": "^1.4.1",
+    "date-fns": "^2.8.1"
   },
   "devDependencies": {
     "dotenv": "^8.2.0"

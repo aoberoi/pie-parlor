@@ -1,4 +1,5 @@
 const { App } = require('@slack/bolt');
+const { isPast, parseISO } = require('date-fns');
 
 const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -51,6 +52,10 @@ app.action('start_an_order', async ({ action, ack, body, context }) => {
         type: 'plain_text',
         text: 'Cancel',
       },
+      private_metadata: JSON.stringify({
+        order_channel: body.channel.id,
+        order_user: body.user.id,
+      }),
       blocks: [
         {
           type: 'input',
@@ -163,6 +168,38 @@ app.action('start_an_order', async ({ action, ack, body, context }) => {
         },
       ],
     },
+  });
+});
+
+app.view('order_submission', async ({ view, ack, context }) => {
+  console.log('\n\n** Order submission **');
+  console.log('Filling', view.state.values.filling.select);
+  console.log('Toppings', view.state.values.toppings.selections);
+  console.log('Delivery date', view.state.values.delivery.date);
+
+  // NOTE: assumes the system is in the same timezone as the user
+  if (isPast(parseISO(view.state.values.delivery.date.selected_date))) {
+    // Error
+    ack({
+      response_action: 'errors',
+      errors: {
+        delivery: 'You may not select a delivery date in the past',
+      },
+    });
+    return;
+  }
+  ack();
+
+  // TODO: Interact with another API, a database, or whatever you need to do next
+
+  const metadata = JSON.parse(view.private_metadata);
+  console.log(metadata);
+
+  await app.client.chat.postEphemeral({
+    token: context.botToken,
+    user: metadata.order_user,
+    channel: metadata.order_channel,
+    text: `<@${metadata.order_user}>, your order was placed successfully. 🧡`,
   });
 });
 
