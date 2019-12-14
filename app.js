@@ -30,6 +30,7 @@ app.event('message', ({ event, say }) => {
 });
 
 app.action('start_an_order', async ({ action, ack, body, context }) => {
+  console.log('\n\n** Start an order **');
   console.log(action);
   ack();
   await app.client.views.open({
